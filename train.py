@@ -4,6 +4,7 @@ import pandas as pd
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers.legacy import Adam
+import matplotlib.pyplot as plt
 from delta_operator import delta_operator
 from substract_min_operator import substract_min_operator
 from zigzag import zigzag_encode
@@ -14,8 +15,10 @@ import lz4.frame
 import pickle
 import math
 import os
+import csv
+import time
 
-print(os.getcwd())
+# print(os.getcwd())
 
 dataset_size = 10000
 sequence_length = 1000
@@ -25,7 +28,6 @@ maxbound = 10000
 def generate_random_time_series(length, low=minbound, high=maxbound):
     time_series = np.random.randint(low, high, size=length)
     return time_series
-
 
 def original(seq):
     return seq
@@ -168,46 +170,6 @@ def main():
     print("Action Counts:")
     for action, count in action_counts.items():
         print(f"{action}: {count}")
-
-    # file1_path = 'trans_data/GW-Magnetic/syndata_magnetic0.csv'
-    # file1_path = 'trans_data/USGS-Earthquakes/syndata_earthquakes0.csv'
-    # data1 = pd.read_csv(file1_path)['3598']
-    # array1 = data1.to_numpy()[:1000]
-
-    # array1_ts2diff = substract_min_operator(delta_operator(array1))
-    # compressed_size_bp = 0
-    # segmented_sequence = [array1_ts2diff[i:i+8] for i in range(0, len(array1_ts2diff), 8)]
-
-    # for segment in segmented_sequence:
-    #     width = math.ceil(math.log(max(segment)))
-    #     compressed_size_bp = compressed_size_bp + width*len(segment)
-    # print(compressed_size_bp)
-
-    # # 加载模型
-    # env = EncodingEnvironment(array1)
-    # agent = RLAgent(state_size=1000, action_size=4)
-    # agent.load_model('model.h5')
-    
-    # # test_sequence = generate_random_time_series(sequence_length, low=minbound, high=maxbound)
-    # test_state = np.reshape(array1, [1, len(array1)])
-    # test_action_index = agent.act(test_state)
-    # test_action = env.action_space[test_action_index]
-    # print(test_action)
-    # _, test_reward = env.step(test_action)
-
-    # # 使用 gzip 进行压缩
-    # compressed_data_gzip = gzip.compress(pickle.dumps(_))
-    # compressed_size_gzip = len(compressed_data_gzip)
-
-    # # 使用 snappy 进行压缩
-    # compressed_data_snappy = snappy.compress(pickle.dumps(_))
-    # compressed_size_snappy = len(compressed_data_snappy)
-
-    # # 使用 lz4 进行压缩
-    # compressed_data_lz4 = lz4.frame.compress(pickle.dumps(_))
-    # compressed_size_lz4 = len(compressed_data_lz4)
-
-    # print(min(compressed_size_gzip, compressed_size_lz4, compressed_size_snappy))
 
 if __name__ == "__main__":
     main()
