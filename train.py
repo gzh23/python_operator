@@ -12,6 +12,7 @@ from RLE import encode_rle
 import gzip
 import snappy
 import lz4.frame
+import lzma
 import pickle
 import math
 import os
@@ -103,19 +104,48 @@ def calculate_reward(encoding,action):
         return 0
     original_size = sequence_length * 32  # 假设原始序列每个元素占 32 位
 
+    compressed_data = action(encoding)
+
     # 使用 gzip 进行压缩
-    compressed_data_gzip = gzip.compress(pickle.dumps(encoding))
-    compressed_size_gzip = len(compressed_data_gzip)
+    data_gzip = gzip.compress(pickle.dumps(encoding))
+    datasize_gzip = len(data_gzip)
+    compressed_data_gzip = gzip.compress(pickle.dumps(compressed_data))
+    compressed_datasize_gzip = len(compressed_data_gzip)
 
     # 使用 snappy 进行压缩
-    compressed_data_snappy = snappy.compress(pickle.dumps(encoding))
-    compressed_size_snappy = len(compressed_data_snappy)
+    data_snappy = snappy.compress(pickle.dumps(encoding))
+    datasize_snappy = len(data_snappy)
+    compressed_data_snappy = snappy.compress(pickle.dumps(compressed_data))
+    compressed_datasize_snappy = len(compressed_data_snappy)
 
     # 使用 lz4 进行压缩
-    compressed_data_lz4 = lz4.frame.compress(pickle.dumps(encoding))
-    compressed_size_lz4 = len(compressed_data_lz4)
+    data_lz4 = lz4.frame.compress(pickle.dumps(encoding))
+    datasize_lz4 = len(data_lz4)
+    compressed_data_lz4 = lz4.frame.compress(pickle.dumps(compressed_data))
+    compressed_datasize_lz4 = len(compressed_data_lz4)
 
     # 使用 bp 进行压缩
+    datasize_bp = bp(encoding)
+    compressed_datasize_bp = bp(compressed_data)
+
+    # 使用 xz 压缩
+    data_xz = lzma.compress(pickle.dumps(encoding), format=lzma.FORMAT_XZ)
+    datasize_xz = len(data_xz)
+    compressed_data_xz = lzma.compress(pickle.dumps(compressed_data), format=lzma.FORMAT_XZ)
+    compressed_datasize_xz = len(compressed_data_xz)
+
+    # 计算奖励，可以根据具体情况进行调整
+    reward_gzip = datasize_gzip - compressed_datasize_gzip
+    reward_snappy = datasize_snappy - compressed_datasize_snappy
+    reward_lz4 = datasize_lz4 - compressed_datasize_lz4
+    reward_bp = datasize_bp - compressed_datasize_bp
+    reward_xz = datasize_xz - compressed_datasize_xz
+
+    # 返回使用不同压缩算法得到的奖励，你可以根据具体情况选择使用哪个算法
+    return max(reward_gzip, reward_snappy, reward_lz4, reward_bp, reward_xz)
+
+
+def bp(encoding):
     compressed_size_bp = 999999
     if min(encoding) >= 0:
         compressed_size_bp = 0
@@ -124,15 +154,7 @@ def calculate_reward(encoding,action):
         for segment in segmented_sequence:
             width = math.ceil(math.log(max(segment)))
             compressed_size_bp = compressed_size_bp + width*len(segment) / 8
-
-    # 计算奖励，可以根据具体情况进行调整
-    reward_gzip = original_size / compressed_size_gzip
-    reward_snappy = original_size / compressed_size_snappy
-    reward_lz4 = original_size / compressed_size_lz4
-    reward_bp = original_size / compressed_size_bp
-
-    # 返回使用不同压缩算法得到的奖励，你可以根据具体情况选择使用哪个算法
-    return -min(compressed_size_gzip, compressed_size_lz4, compressed_size_snappy, compressed_size_bp)
+    return compressed_size_bp
 
 # 主循环
 def main():
