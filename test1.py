@@ -133,6 +133,7 @@ def calculate_reward(encoding,action):
 def test():
     ppath = r'trans_data/'
     dataset_names = ['CS-Sensors','Cyber-Vehicle','EPM-Education','GW-Magnetic','Metro-Traffic','Nifty-Stocks','TH-Climate','TY-Fuel','TY-Transport','USGS-Earthquakes','Vehicle-Charge','YZ-Electricity']
+    # dataset_names = ['CS-Sensors']
     count1 = 0
     count2 = 0
     data = [['datasetName','compressed_size','model_size','opt_size','model_time','opt_time']]
@@ -140,7 +141,7 @@ def test():
     for dataset_name in dataset_names:
         dir_path = ppath + dataset_name
         file_names = os.listdir(dir_path)
-        compressed_size_bp = 0
+        ts_size = 0
         pre_size = 0
         min_size = 0
         pre_time = 0
@@ -160,26 +161,34 @@ def test():
                 if len(array1) < 1000:
                     continue
                 point = point + 1000
-                s = time.time()
-                test_state = np.reshape(array1, [1, len(array1)])
-                _ = zigzag_encode(test_state)
+                st = time.time()
+                test_state = np.reshape(array1, [1, len(array1)])[0]
+                s = substract_min_operator(delta_operator(test_state))
+                segmented_sequence = [s[i:i+8] for i in range(0, len(s), 8)]
 
                 # 使用 gzip 进行压缩
-                compressed_data_gzip = gzip.compress(pickle.dumps(_))
+                compressed_data_gzip = gzip.compress(pickle.dumps(s))
                 compressed_size_gzip = len(compressed_data_gzip)
 
-                compressed_size_bp = compressed_size_bp + compressed_size_gzip
-                z_time = z_time + time.time() - s
+                # 使用 snappy 进行压缩
+                compressed_data_snappy = snappy.compress(pickle.dumps(s))
+                compressed_size_snappy = len(compressed_data_snappy)
 
-                # segmented_sequence = [array1_ts2diff[i:i+8] for i in range(0, len(array1_ts2diff), 8)]
+                # 使用 lz4 进行压缩
+                compressed_data_lz4 = lz4.frame.compress(pickle.dumps(s))
+                compressed_size_lz4 = len(compressed_data_lz4)
 
-                # for segment in segmented_sequence:
-                #     if max(segment) > 1:
-                #         width = math.ceil(math.log(max(segment)))
-                #     else:
-                #         width = 1
-                #     compressed_size_bp = compressed_size_bp + width*len(segment)
-                # print(compressed_size_bp)
+                for segment in segmented_sequence:
+                    if max(segment) > 1:
+                        width = math.ceil(math.log(max(segment)))
+                    elif min(segment) < 0:
+                        width = 32
+                    else:
+                        width = 1
+                    ts_size = ts_size + width*len(segment)/8
+                
+                z_time = z_time + time.time() - st
+                
 
                 # 加载模型
                 env = EncodingEnvironment(array1)
@@ -192,7 +201,12 @@ def test():
                 test_action = env.action_space[test_action_index]
                 # print(test_action)
                 s = time.time()
-                _ = test_action(test_state)
+                _ = test_action(test_state)[0]
+                test_state = np.reshape(_, [1, len(_)])
+                test_action_index = agent.act(test_state)
+                test_action = env.action_space[test_action_index]
+                # print(test_action)
+                _ = test_action(test_state)[0]
 
                 # 使用 gzip 进行压缩
                 compressed_data_gzip = gzip.compress(pickle.dumps(_))
@@ -206,7 +220,18 @@ def test():
                 compressed_data_lz4 = lz4.frame.compress(pickle.dumps(_))
                 compressed_size_lz4 = len(compressed_data_lz4)
 
-                pre_size = pre_size + min(compressed_size_gzip, compressed_size_lz4, compressed_size_snappy)
+                bp_size = 0
+                segmented_sequence = [_[i:i+8] for i in range(0, _.shape[0], 8)]
+                for segment in segmented_sequence:
+                    if max(segment) > 1:
+                        width = math.ceil(math.log(max(segment)))
+                    elif min(segment) < 0:
+                        width = 32
+                    else:
+                        width = 1
+                    bp_size = bp_size + width*len(segment)/8
+
+                pre_size = pre_size + min(compressed_size_gzip, compressed_size_lz4, compressed_size_snappy, bp_size)
                 pre_time = pre_time + time.time() - s
 
 
@@ -215,35 +240,42 @@ def test():
                 # 遍历查找最佳编码
                 action_space = [delta_operator, substract_min_operator, zigzag_encode, original] 
                 s = time.time()
-                test_state = np.reshape(array1, [1, len(array1)])
-                for action in action_space:
-                    _ = action(test_state)
+                min_size1 = 9999999999
+                for action1 in action_space:
+                    test_state = np.reshape(array1, [1, len(array1)])[0]
+                    s1 = action1(test_state)
+                    test_state = np.reshape(s1, [1, len(s1)])[0]
+                    for action2 in action_space:
+                        s2 = action2(test_state)
 
-                    # 使用 gzip 进行压缩
-                    compressed_data_gzip = gzip.compress(pickle.dumps(_))
-                    compressed_size_gzip = len(compressed_data_gzip)
+                        # 使用 gzip 进行压缩
+                        compressed_data_gzip = gzip.compress(pickle.dumps(s2))
+                        compressed_size_gzip = len(compressed_data_gzip)
 
-                    # 使用 snappy 进行压缩
-                    compressed_data_snappy = snappy.compress(pickle.dumps(_))
-                    compressed_size_snappy = len(compressed_data_snappy)
+                        # 使用 snappy 进行压缩
+                        compressed_data_snappy = snappy.compress(pickle.dumps(s2))
+                        compressed_size_snappy = len(compressed_data_snappy)
 
-                    # 使用 lz4 进行压缩
-                    compressed_data_lz4 = lz4.frame.compress(pickle.dumps(_))
-                    compressed_size_lz4 = len(compressed_data_lz4)
+                        # 使用 lz4 进行压缩
+                        compressed_data_lz4 = lz4.frame.compress(pickle.dumps(s2))
+                        compressed_size_lz4 = len(compressed_data_lz4)
 
-                    min_size1 = min(compressed_size_gzip, compressed_size_lz4, compressed_size_snappy)
+                        bp_size = 0
+                        segmented_sequence = [s2[i:i+8] for i in range(0, len(s2), 8)]
+                        for segment in segmented_sequence:
+                            if max(segment) > 1:
+                                width = math.ceil(math.log(max(segment)))
+                            elif min(segment) < 0:
+                                width = 32
+                            else:
+                                width = 1
+                            bp_size = bp_size + width*len(segment)/8
+
+                        min_size1 = min(min_size1,compressed_size_gzip, compressed_size_lz4, compressed_size_snappy,bp_size)
                 min_size = min_size + min_size1
                 min_time = min_time + time.time() - s
-
-    #         print(min_size)
-    #         if min_size == pre_size:
-    #             count1 = count1 + 1
-    #         else:
-    #             count2 = count2 + 1
-    # print(count1)
-    # print(count2)
-        data.append([dataset_name,compressed_size_bp,pre_size,min_size,pre_time,min_time])
-        results.append([compressed_size_bp/point,pre_size/point,min_size/point,z_time/point,pre_time/point,min_time/point])
+        data.append([dataset_name,ts_size,pre_size,min_size,pre_time,min_time])
+        results.append([ts_size/point,pre_size/point,min_size/point,z_time/point,pre_time/point,min_time/point])
 
     with open('result.csv', 'w', newline='') as file:
         writer = csv.writer(file)
@@ -253,7 +285,7 @@ def test():
 
     x = np.arange(len(dataset_names))
     results = np.array(results)
-    plt.bar(x, results[:, 0], width=bar_width, label="zigzag")
+    plt.bar(x, results[:, 0], width=bar_width, label="ts2diff")
     plt.bar(x+ bar_width, results[:, 1], width=bar_width, label="model")
     plt.bar(x + 2*bar_width, results[:, 2], width=bar_width, label="opt")
     plt.xlabel('Datasets')
@@ -266,7 +298,7 @@ def test():
     bar_width = 0.15
     x = np.arange(len(dataset_names))
     results = np.array(results)
-    plt.bar(x, results[:, 3], width=bar_width, label="zigzag")
+    plt.bar(x, results[:, 3], width=bar_width, label="ts2diff")
     plt.bar(x + bar_width, results[:, 4], width=bar_width, label="model")
     plt.bar(x + 2*bar_width, results[:, 5], width=bar_width, label="opt")
     plt.xlabel('Datasets')
