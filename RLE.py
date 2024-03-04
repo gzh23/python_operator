@@ -31,10 +31,12 @@ def decode_rle(encoded_list):
         decoded_result += count * str(digit) + ' '  # 添加空格分隔
     return decoded_result.rstrip()  # 移除末尾多余的空格
 
-# print("请输入待压缩数据（空格分隔的整数序列）：")
-# input_data = input()
-# encoded_result = encode_rle(input_data)
-# # decoded_result = decode_rle(encoded_result)
-# print("原始数据：", input_data)
-# print("RLE压缩结果：", encoded_result)
-# # print("解压缩结果：", decoded_result)
+if __name__ == "__main__":
+    # original_data = [int(x) for x in input("请输入待压缩数据（空格分隔的整数序列）：").split()]
+    original_data = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3]
+    encoded_result = encode_rle(original_data)
+    decoded_result = decode_rle(encoded_result)
+    print("原始数据：", original_data)
+    print("RLE压缩结果：", encoded_result)
+    print("解压缩结果：", decoded_result)
+
