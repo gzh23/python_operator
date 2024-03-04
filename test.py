@@ -24,13 +24,11 @@ test.to_csv('test_substract.csv', index=False, header=None)
 test = pd.read_csv('origin_data/Cyber-Vehicle/syndata_vehicle1.csv', header=None, names=['Timestamp', 'Value'])
 value = test['Value'].to_list()
 
-from xor_float_operator import xor_float_operator
+from xor_float import xor_float_operator, xor_float_decode
 
 xor = xor_float_operator(value)
 test['Value'] = xor
 test.to_csv('syndata_vehicle1_xor.csv', index=False, header=None)
-
-from xor_float_decode import xor_float_decode
 
 decode = xor_float_decode(xor)
 test['Value'] = decode

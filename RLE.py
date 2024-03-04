@@ -4,8 +4,8 @@ def encode_rle(input_list):
     # input_list = list(map(int, input_string.split()))  # 将输入的字符串解析为整数列表
     # if not input_list:
     #     return []
-    count_list=[]
-    value_list=[]
+    count_list = []
+    value_list = []
     current_digit = input_list[0]
     count = 1
     for digit in input_list[1:]:
@@ -23,6 +23,7 @@ def encode_rle(input_list):
     # encoded_result.append(f'[{count}]{current_digit}')
     return count_list+value_list
 
+
 def decode_rle(encoded_list):
     decoded_result = ""
     for item in encoded_list:
@@ -30,6 +31,7 @@ def decode_rle(encoded_list):
         count = int(count_str)
         decoded_result += count * str(digit) + ' '  # 添加空格分隔
     return decoded_result.rstrip()  # 移除末尾多余的空格
+
 
 if __name__ == "__main__":
     # original_data = [int(x) for x in input("请输入待压缩数据（空格分隔的整数序列）：").split()]
@@ -39,4 +41,3 @@ if __name__ == "__main__":
     print("原始数据：", original_data)
     print("RLE压缩结果：", encoded_result)
     print("解压缩结果：", decoded_result)
-

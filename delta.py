@@ -18,13 +18,11 @@ def delta_operator(sequence):
 
 def delta_decode(sequence):
     result = []
-    # 分段为8个8个的
     segmented_sequence = [sequence[i:i+8] for i in range(0, len(sequence), 8)]
 
     for segment in segmented_sequence:
         transformed_segment = [segment[0]]
         for i in range(1, len(segment)):
-            # 其与数字变为与前一个数字的差值
             difference = segment[i] + transformed_segment[i-1]
             transformed_segment.append(difference)
 
