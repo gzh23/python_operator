@@ -3,19 +3,19 @@ import pandas as pd
 test = pd.read_csv('origin_data/CS-Sensors/test.csv', header=None, names=['Timestamp', 'Value'])
 value = test['Value'].to_list()
 
-from delta_operator import delta_operator
+from delta import delta_operator
 
 delta = delta_operator(value)
 test['Value'] = delta
 test.to_csv('test_delta.csv', index=False, header=None)
 
-from delta_decode import delta_decode
+from delta import delta_decode
 
 decode = delta_decode(delta)
 test['Value'] = decode
 test.to_csv('test_delta_decode.csv', index=False, header=None)
 
-from substract_min_operator import substract_min_operator
+from substract_min import substract_min_operator
 
 substract = substract_min_operator(value)
 test['Value'] = substract

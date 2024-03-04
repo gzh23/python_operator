@@ -1,12 +1,12 @@
 import numpy as np
 import tensorflow as tf
 import pandas as pd
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers.legacy import Adam
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.optimizers import Adam
 import matplotlib.pyplot as plt
-from delta_operator import delta_operator
-from substract_min_operator import substract_min_operator
+from delta import delta_operator
+from substract_min import substract_min_operator
 from zigzag import zigzag_encode
 from RLE import encode_rle
 import gzip
