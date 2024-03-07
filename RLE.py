@@ -36,8 +36,8 @@ def decode_rle(encoded_list):
 if __name__ == "__main__":
     # original_data = [int(x) for x in input("请输入待压缩数据（空格分隔的整数序列）：").split()]
     original_data = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3]
-    encoded_result = encode_rle(original_data)
-    decoded_result = decode_rle(encoded_result)
     print("原始数据：", original_data)
+    encoded_result = encode_rle(original_data)
     print("RLE压缩结果：", encoded_result)
+    decoded_result = decode_rle(encoded_result)
     print("解压缩结果：", decoded_result)
