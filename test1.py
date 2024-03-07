@@ -9,6 +9,7 @@ from delta import delta_operator
 from substract_min import substract_min_operator
 from zigzag import zigzag_encode
 from RLE import encode_rle
+from DictionaryInt import dictionaryEncoding
 import gzip
 import snappy
 import lz4.frame
@@ -33,11 +34,14 @@ class EncodingEnvironment:
     def __init__(self, initial_sequence):
         self.sequence = initial_sequence
         self.current_encoding = None
-        self.action_space = [delta_operator, substract_min_operator, zigzag_encode, original] 
+        self.action_space = [original, delta_operator, substract_min_operator, zigzag_encode, encode_rle, dictionaryEncoding] 
 
     def step(self, action):
         # 应用编码算子
-        self.current_encoding = action(self.sequence)
+        if action == encode_rle or action == dictionaryEncoding:
+            self.current_encoding = action(self.sequence)[0] + [0] * (len(self.sequence) - len(action(self.sequence)[0]))
+        else:
+            self.current_encoding = action(self.sequence)
         # 计算奖励（需要根据任务具体情况进行定义）
         reward = calculate_reward(self.current_encoding, action)
         return self.current_encoding, reward
