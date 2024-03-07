@@ -33,7 +33,8 @@ def decompress_float_sequence(compressed_data):
 
 
 if __name__ == "__main__":
-    original_data = [float(x) for x in input("请输入待压缩数据（空格分隔的浮点数序列）：").split()]
+    # original_data = [float(x) for x in input("请输入待压缩数据（空格分隔的浮点数序列）：").split()]
+    original_data = [1.5, -2.25, 4.0, 55, 6.0]
     compressed_data = compress_float_sequence(original_data)
     decompressed_data = decompress_float_sequence(compressed_data)
     print("原始数据：", original_data)

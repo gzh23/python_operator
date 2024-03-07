@@ -30,3 +30,12 @@ def xor_float_decode(sequence):
         result.append(decoded_float)
 
     return result
+
+
+if __name__ == "__main__":
+    original_data = [1.5, -2.25, 4.0, 55, 6.0]
+    encoded_data = xor_float_operator(original_data)
+    decoded_data = xor_float_decode(encoded_data)
+    print(original_data)
+    print(encoded_data)
+    print(decoded_data)
