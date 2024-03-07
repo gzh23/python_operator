@@ -15,7 +15,7 @@ def zigzag_decode(data):
 
 
 if __name__ == "__main__":
-    original_data = [int(x) for x in input("请输入待压缩数据（空格分隔的整数序列）：").split()]
+    original_data = [1, -2, 4, 5, 6]
     encoded_data = zigzag_encode(original_data)
     decoded_data = zigzag_decode(encoded_data)
     print("原始数据：", original_data)

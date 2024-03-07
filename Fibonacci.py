@@ -40,6 +40,10 @@ def fibonacciEncoding(n):
     return "".join(codeword)
 
 
+def fibonacciEncodings(values):
+    return [fibonacciEncoding(value) for value in values]
+
+
 def fibonacciDecoding(s):
     n = len(s)
     fib = [0] * n
@@ -53,8 +57,13 @@ def fibonacciDecoding(s):
     return res
 
 
+def fibonacciDecodings(values):
+    return [fibonacciDecoding(value) for value in values]
+
+
 if __name__ == "__main__":
-    n = 143
-    print("Fibonacci code word for", n, "is", fibonacciEncoding(n))
-    print("Fibonacci code word for", n, "is",
-          fibonacciDecoding(fibonacciEncoding(n)))
+    input_list = [1, 2, 4, 5, 6]
+    encoded_result = fibonacciEncodings(input_list)
+    print(encoded_result)
+    decoded_result = fibonacciDecodings(encoded_result)
+    print(decoded_result)
