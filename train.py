@@ -38,18 +38,30 @@ def original(seq):
 class EncodingEnvironment:
     def __init__(self, initial_sequence):
         self.sequence = initial_sequence
-        self.current_encoding = None
+        # self.current_encoding = None
+        self.current_encoding1 = None
+        self.current_encoding2 = None
         self.action_space = [original, delta_operator, substract_min_operator, zigzag_encode, encode_rle, dictionaryEncoding] 
 
     def step(self, action):
         # 应用编码算子
         if action == encode_rle or action == dictionaryEncoding:
-            self.current_encoding = action(self.sequence)[0] + [0] * (len(self.sequence) - len(action(self.sequence)[0]))
+            # self.current_encoding = action(self.sequence)[0] + action(self.sequence)[1]
+            self.current_encoding1 = action(self.sequence)[0] + [0] * (len(self.sequence) - len(action(self.sequence)[0]))
+            self.current_encoding2 = action(self.sequence)[1] + [0] * (len(self.sequence) - len(action(self.sequence)[1]))
+            reward1 = calculate_reward(self.current_encoding1, action)
+            reward2 = calculate_reward(self.current_encoding2, action)
+            return (self.current_encoding1, reward1), (self.current_encoding2, reward2)
         else:
-            self.current_encoding = action(self.sequence)
+            self.current_encoding1 = action(self.sequence)
+            self.current_encoding2 = None
+            reward = calculate_reward(self.current_encoding1, action)
+            return self.current_encoding1, reward
         # 计算奖励（需要根据任务具体情况进行定义）
-        reward = calculate_reward(self.current_encoding, action)
-        return self.current_encoding, reward
+        # reward1 = calculate_reward(self.current_encoding1, action)
+        # reward2 = calculate_reward(self.current_encoding2, action) if self.current_encoding2 is not None else 0
+        # return self.current_encoding, reward
+        # return (self.current_encoding1, reward1), (self.current_encoding2, reward2)
 
 # 定义强化学习代理
 class RLAgent:
@@ -108,7 +120,10 @@ def calculate_reward(encoding,action):
         return 0
     original_size = sequence_length * 32  # 假设原始序列每个元素占 32 位
 
-    compressed_data = action(encoding)
+    if action == encode_rle or action == dictionaryEncoding:
+        compressed_data = action(encoding)[0] + [0] * (len(encoding) - len(action(encoding)[0]))
+    else:
+        compressed_data = action(encoding)
 
     # 使用 gzip 进行压缩
     data_gzip = gzip.compress(pickle.dumps(encoding))
@@ -185,9 +200,20 @@ def main():
         action_counts[action] += 1
         print(action)
 
-        next_encoding, reward = env.step(action)
-        next_state = np.reshape(next_encoding, [1, len(next_encoding)])
-        agent.train(state, action_index, reward, next_state)
+        if action == encode_rle or action == dictionaryEncoding:
+            (next_encoding1, reward1), (next_encoding2, reward2) = env.step(action)
+            next_state1 = np.reshape(next_encoding1, [1, len(next_encoding1)])
+            next_state2 = np.reshape(next_encoding2, [1, len(next_encoding2)])
+            agent.train(state, action_index, reward1, next_state1)
+            agent.train(state, action_index, reward2, next_state2)
+        else:
+            next_encoding, reward = env.step(action)
+            next_state = np.reshape(next_encoding, [1, len(next_encoding)])
+            agent.train(state, action_index, reward, next_state)
+
+        # next_encoding, reward = env.step(action)
+        # next_state = np.reshape(next_encoding, [1, len(next_encoding)])
+        # agent.train(state, action_index, reward, next_state)
 
     # 保存模型
     agent.save_model('model.h5')
