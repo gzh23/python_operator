@@ -5,8 +5,8 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers.legacy import Adam
 import matplotlib.pyplot as plt
-from delta_operator import delta_operator
-from substract_min_operator import substract_min_operator
+from delta import delta_operator
+from substract_min import substract_min_operator
 from zigzag import zigzag_encode
 from RLE import encode_rle
 import gzip
